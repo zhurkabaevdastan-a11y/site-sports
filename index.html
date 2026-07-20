@@ -26,6 +26,9 @@
         <button data-view="applications" class="auth-only hidden">Мои заявки</button>
         <button data-view="profile" class="auth-only hidden">Профиль</button>
       </nav>
+      <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-expanded="false" aria-label="Открыть мобильное меню">
+        <span></span><span></span><span></span>
+      </button>
       <div class="account-actions">
         <button id="loginOpen" class="button secondary guest-only">Войти</button>
         <button id="signupOpen" class="button primary guest-only">Регистрация</button>
@@ -34,6 +37,21 @@
       </div>
     </div>
   </header>
+  <div class="mobile-drawer hidden" id="mobileDrawer">
+    <div class="mobile-drawer-inner">
+      <button data-view="home">Главная</button>
+      <button data-view="events">События</button>
+      <button data-view="instructors">Инструкторы</button>
+      <button data-view="results">Результаты</button>
+      <button data-view="photos">Фото</button>
+      <button data-view="applications" class="auth-only hidden">Мои заявки</button>
+      <button data-view="profile" class="auth-only hidden">Профиль</button>
+      <button id="mobileLoginOpen" class="button secondary guest-only">Войти</button>
+      <button id="mobileSignupOpen" class="button primary guest-only">Регистрация</button>
+      <button id="mobileLogoutBtn" class="button secondary auth-only hidden">Выйти</button>
+    </div>
+  </div>
+
 
   <main>
     <section class="view active" id="view-home">
@@ -262,6 +280,29 @@
   </div>
 
   <div class="toast hidden" id="toast"></div>
+
+
+  <nav class="mobile-bottom-nav" aria-label="Мобильная навигация">
+    <button data-view="home" class="bottom-nav-item active">
+      <span>⌂</span><small>Главная</small>
+    </button>
+    <button data-view="events" class="bottom-nav-item">
+      <span>🏅</span><small>События</small>
+    </button>
+    <button data-view="photos" class="bottom-nav-item">
+      <span>▧</span><small>Фото</small>
+    </button>
+    <button data-view="applications" class="bottom-nav-item auth-only hidden">
+      <span>✓</span><small>Заявки</small>
+    </button>
+    <button data-view="profile" class="bottom-nav-item">
+      <span>◉</span><small>Кабинет</small>
+    </button>
+  </nav>
+
+  <button class="mobile-register-fab guest-only" id="mobileRegisterFab" type="button">
+    Регистрация
+  </button>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>

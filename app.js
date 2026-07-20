@@ -106,6 +106,14 @@ function navigate(view) {
   $$(".view").forEach(el => el.classList.remove("active"));
   const target = $(`#view-${view}`);
   if (target) target.classList.add("active");
+
+  $$(".bottom-nav-item").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.view === view);
+  });
+
+  $("#mobileDrawer")?.classList.add("hidden");
+  $("#mobileMenuToggle")?.setAttribute("aria-expanded", "false");
+
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (view === "applications") loadApplications();
   if (view === "profile") loadProfile();
@@ -444,11 +452,47 @@ function initPhotoFilters() {
   });
 }
 
+
+function initializeMobileUI() {
+  const toggle = $("#mobileMenuToggle");
+  const drawer = $("#mobileDrawer");
+
+  toggle?.addEventListener("click", () => {
+    const willOpen = drawer.classList.contains("hidden");
+    drawer.classList.toggle("hidden", !willOpen);
+    toggle.setAttribute("aria-expanded", String(willOpen));
+  });
+
+  $("#mobileLoginOpen")?.addEventListener("click", () => openAuth("login"));
+  $("#mobileSignupOpen")?.addEventListener("click", () => openAuth("signup"));
+  $("#mobileRegisterFab")?.addEventListener("click", () => openAuth("signup"));
+
+  $("#mobileLogoutBtn")?.addEventListener("click", async () => {
+    if (isConfigured) await supabaseClient.auth.signOut();
+    localStorage.removeItem("ktz_demo_user");
+    currentUser = null;
+    updateAuthUI();
+    navigate("home");
+  });
+
+  drawer?.querySelectorAll("[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      if ((view === "applications" || view === "profile") && !currentUser) {
+        openAuth("login");
+        return;
+      }
+      navigate(view);
+    });
+  });
+}
+
 async function initialize() {
   renderEvents();
   renderInstructors();
   renderPhotoArchive();
   initPhotoFilters();
+  initializeMobileUI();
   $("#modeNote").textContent = isConfigured
     ? "Рабочий режим: данные сохраняются в Supabase."
     : "Демо-режим: данные сохраняются только в этом браузере. Подключите Supabase для настоящей базы.";
