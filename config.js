@@ -7,5 +7,15 @@
 window.KTZ_CONFIG = {
   supabaseUrl: "",
   supabaseAnonKey: "",
-  demoMode: true
+  demoMode: true,
+
+  // Ссылки на фотоальбомы событий.
+  // Можно вставить ссылки Google Drive, OneDrive, Яндекс Диск или корпоративного фотохранилища.
+  eventPhotoUrls: {
+    "futsal-2027": "https://disk.yandex.ru/d/DJOG8JlXlgYrag",
+    "volleyball-2027": "https://disk.yandex.ru/d/DJOG8JlXlgYrag",
+    "summer-games-2027": "https://disk.yandex.ru/d/DJOG8JlXlgYrag"
+  },
+
+  photoArchiveUrl: "https://disk.yandex.ru/d/DJOG8JlXlgYrag"
 };

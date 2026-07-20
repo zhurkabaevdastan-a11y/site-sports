@@ -20,6 +20,9 @@
       <nav>
         <button data-view="home">Главная</button>
         <button data-view="events">События</button>
+        <button data-view="instructors">Инструкторы</button>
+        <button data-view="results">Результаты</button>
+        <button data-view="photos">Фото</button>
         <button data-view="applications" class="auth-only hidden">Мои заявки</button>
         <button data-view="profile" class="auth-only hidden">Профиль</button>
       </nav>
@@ -74,6 +77,77 @@
         <p>Выберите мероприятие и отправьте заявку. Для подачи заявки необходимо войти в аккаунт.</p>
       </div>
       <div class="wrap event-grid" id="eventGrid"></div>
+    </section>
+
+    <section class="view" id="view-instructors">
+      <div class="page-head wrap">
+        <span class="eyebrow blue">Команда на местах</span>
+        <h1>Спортивные инструкторы</h1>
+        <p>Основные регионы КТЖ. ФИО, телефон и электронную почту каждого инструктора можно добавить в одном месте в файле <code>app.js</code>.</p>
+      </div>
+      <div class="wrap region-grid" id="instructorGrid"></div>
+    </section>
+
+    <section class="view" id="view-results">
+      <div class="page-head wrap">
+        <span class="eyebrow blue">Наши достижения</span>
+        <h1>Результаты КТЖ</h1>
+        <p>Ключевые победы сборной КТЖ на Спартакиадах группы компаний «Самрук-Қазына».</p>
+      </div>
+
+      <div class="wrap victory-grid">
+        <article class="victory-card">
+          <span class="victory-year">IX Спартакиада АО «Самрук-Қазына»</span>
+          <div class="victory-place">I</div>
+          <h2>Первое общекомандное место</h2>
+          <p>Сборная КТЖ стала победителем общекомандного зачёта и завоевала 20 медалей.</p>
+          <div class="medal-grid">
+            <div><strong>11</strong><span>золотых</span></div>
+            <div><strong>6</strong><span>серебряных</span></div>
+            <div><strong>3</strong><span>бронзовых</span></div>
+          </div>
+          <p class="result-note">Команда показала высокие результаты в индивидуальных и командных видах спорта.</p>
+        </article>
+
+        <article class="victory-card featured">
+          <span class="victory-year">X Спартакиада АО «Самрук-Қазына»</span>
+          <div class="victory-place">I</div>
+          <h2>Повторная победа КТЖ</h2>
+          <p>Команда КТЖ вновь заняла первое место в общекомандном зачёте и подтвердила статус одного из лидеров корпоративного спорта.</p>
+          <div class="champion-chip">Двукратный победитель</div>
+          <p class="result-note">Подробные результаты по отдельным дисциплинам можно добавить после утверждения итогового протокола.</p>
+        </article>
+      </div>
+    </section>
+
+
+    <section class="view" id="view-photos">
+      <div class="page-head wrap">
+        <span class="eyebrow blue">Фотоархив КТЖ SPORT</span>
+        <h1>Фото по годам и видам спорта</h1>
+        <p>Выберите год или спортивное направление. Все кнопки ведут в единый фотоархив на Яндекс Диске, где материалы распределены по папкам.</p>
+      </div>
+
+      <div class="wrap photo-archive">
+        <div class="year-filter" aria-label="Выбор года">
+          <button class="year-btn active" data-photo-year="all" type="button">Все годы</button>
+          <button class="year-btn" data-photo-year="2023" type="button">2023</button>
+          <button class="year-btn" data-photo-year="2024" type="button">2024</button>
+          <button class="year-btn" data-photo-year="2025" type="button">2025</button>
+          <button class="year-btn" data-photo-year="2026" type="button">2026</button>
+        </div>
+
+        <div class="photo-grid" id="photoGrid"></div>
+
+        <div class="photo-main-link">
+          <div>
+            <span class="eyebrow blue">Полный архив</span>
+            <h2>Все фотографии КТЖ SPORT</h2>
+            <p>Откройте корневую папку, чтобы посмотреть все годы и доступные спортивные альбомы.</p>
+          </div>
+          <a class="button primary" id="allPhotosLink" href="#" target="_blank" rel="noopener">Открыть Яндекс Диск ↗</a>
+        </div>
+      </div>
     </section>
 
     <section class="view" id="view-applications">

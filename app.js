@@ -28,6 +28,53 @@ const EVENTS = [
   }
 ];
 
+
+
+const PHOTO_ALBUMS = [
+  { year: "2023", sport: "Футзал", icon: "⚽", description: "Материалы турниров и командных соревнований." },
+  { year: "2023", sport: "Волейбол", icon: "🏐", description: "Фотографии матчей и награждения." },
+  { year: "2023", sport: "Спартакиада", icon: "🏅", description: "Сборные соревнования КТЖ." },
+
+  { year: "2024", sport: "Марафон и бег", icon: "🏃", description: "Забеги, старты и финишные моменты." },
+  { year: "2024", sport: "Футзал", icon: "⚽", description: "Командные матчи и лучшие эпизоды." },
+  { year: "2024", sport: "Волейбол", icon: "🏐", description: "Игры региональных команд." },
+  { year: "2024", sport: "Баскетбол", icon: "🏀", description: "Матчи и церемонии награждения." },
+  { year: "2024", sport: "IX Спартакиада Самрук-Қазына", icon: "🥇", description: "Победа сборной КТЖ в общекомандном зачёте." },
+
+  { year: "2025", sport: "Марафон и бег", icon: "🏃", description: "Корпоративные забеги и тренировки." },
+  { year: "2025", sport: "Футзал", icon: "⚽", description: "Чемпионаты и региональные турниры." },
+  { year: "2025", sport: "Волейбол", icon: "🏐", description: "Матчи мужских и женских команд." },
+  { year: "2025", sport: "Национальные виды спорта", icon: "♟️", description: "Тоғызқұмалақ, асық ату и другие дисциплины." },
+  { year: "2025", sport: "X Спартакиада Самрук-Қазына", icon: "🏆", description: "Повторная победа команды КТЖ." },
+
+  { year: "2026", sport: "КТЖ Марафон", icon: "🏃", description: "Фото участников, дистанций и награждения." },
+  { year: "2026", sport: "Футзал", icon: "⚽", description: "Матчи чемпионата КТЖ." },
+  { year: "2026", sport: "Волейбол", icon: "🏐", description: "Игры региональных команд КТЖ." },
+  { year: "2026", sport: "Баскетбол", icon: "🏀", description: "Чемпионат и призёры соревнований." },
+  { year: "2026", sport: "Летняя спартакиада", icon: "🏅", description: "Тоғызқұмалақ, асық ату, настольный теннис, армрестлинг, лёгкая атлетика и шахматы." },
+  { year: "2026", sport: "Плавание", icon: "🏊", description: "Отборочные старты и участники сборной." }
+];
+
+const INSTRUCTORS = [
+  { region: "Астана", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Акмола", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Костанай", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Караганда", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Семей", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Оскемен", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Алматы", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Алтынколь", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Достык", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Жамбыл", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Шымкент", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Кызылорда", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Актобе", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Уральск", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Илецк", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Атырау", name: "ФИО уточняется", phone: "", email: "" },
+  { region: "Мангистау", name: "ФИО уточняется", phone: "", email: "" }
+];
+
 const cfg = window.KTZ_CONFIG || {};
 const isConfigured = Boolean(cfg.supabaseUrl && cfg.supabaseAnonKey && !cfg.demoMode);
 const supabaseClient = isConfigured
@@ -81,11 +128,42 @@ function renderEvents() {
       <h2>${event.title}</h2>
       <p>${event.description}</p>
       <div class="disciplines">${event.disciplines.join(" • ")}</div>
-      <button class="button primary apply-btn" data-event="${event.id}">Подать заявку</button>
+      <div class="event-actions">
+        <button class="button primary apply-btn" data-event="${event.id}">Подать заявку</button>
+        <a class="button secondary photo-link" data-photo-event="${event.id}" href="#" target="_blank" rel="noopener">Фото</a>
+      </div>
     </article>
   `).join("");
 
   $$(".apply-btn").forEach(btn => btn.addEventListener("click", () => openApplication(btn.dataset.event)));
+
+  $$(".photo-link").forEach(link => {
+    const eventId = link.dataset.photoEvent;
+    const photoUrl = cfg.eventPhotoUrls?.[eventId] || "";
+    if (photoUrl) {
+      link.href = photoUrl;
+    } else {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        toast("Фотоальбом этого события пока не добавлен");
+      });
+    }
+  });
+}
+
+function renderInstructors() {
+  const root = $("#instructorGrid");
+  root.innerHTML = INSTRUCTORS.map((item, index) => `
+    <article class="instructor-card">
+      <span class="region-number">${String(index + 1).padStart(2, "0")}</span>
+      <h2>${item.region}</h2>
+      <p>${item.name}</p>
+      <div class="instructor-contacts">
+        ${item.phone ? `<a href="tel:${item.phone.replace(/[^+\d]/g, "")}">${item.phone}</a>` : `<span>Телефон будет добавлен</span>`}
+        ${item.email ? `<a href="mailto:${item.email}">${item.email}</a>` : `<span>Email будет добавлен</span>`}
+      </div>
+    </article>
+  `).join("");
 }
 
 function updateAuthUI() {
@@ -331,8 +409,46 @@ async function loadApplications() {
   }).join("");
 }
 
+
+function renderPhotoArchive(year = "all") {
+  const root = $("#photoGrid");
+  const archiveUrl = cfg.photoArchiveUrl || "https://disk.yandex.ru/d/DJOG8JlXlgYrag";
+  const items = year === "all"
+    ? PHOTO_ALBUMS
+    : PHOTO_ALBUMS.filter(item => item.year === year);
+
+  root.innerHTML = items.map(item => `
+    <article class="photo-card">
+      <div class="photo-card-top">
+        <span class="photo-icon">${item.icon}</span>
+        <span class="photo-year">${item.year}</span>
+      </div>
+      <h2>${item.sport}</h2>
+      <p>${item.description}</p>
+      <a class="button secondary photo-open" href="${archiveUrl}" target="_blank" rel="noopener">
+        Смотреть фото ↗
+      </a>
+    </article>
+  `).join("");
+
+  $("#allPhotosLink").href = archiveUrl;
+}
+
+function initPhotoFilters() {
+  $$(".year-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      $$(".year-btn").forEach(item => item.classList.remove("active"));
+      btn.classList.add("active");
+      renderPhotoArchive(btn.dataset.photoYear);
+    });
+  });
+}
+
 async function initialize() {
   renderEvents();
+  renderInstructors();
+  renderPhotoArchive();
+  initPhotoFilters();
   $("#modeNote").textContent = isConfigured
     ? "Рабочий режим: данные сохраняются в Supabase."
     : "Демо-режим: данные сохраняются только в этом браузере. Подключите Supabase для настоящей базы.";
