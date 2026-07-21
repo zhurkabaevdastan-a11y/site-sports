@@ -5,9 +5,9 @@
 // Никогда не вставляйте сюда service_role key.
 
 window.KTZ_CONFIG = {
-  supabaseUrl: "",
-  supabaseAnonKey: "",
-  demoMode: true,
+  supabaseUrl: "https://bowvuafbszouqimilytd.supabase.co",
+  supabaseAnonKey: "sb_publishable_lz5Tf7Xfkz9KTPWjNtvtzQ_Xo9yVAFG",
+  demoMode: false,
 
   // Ссылки на фотоальбомы событий.
   // Можно вставить ссылки Google Drive, OneDrive, Яндекс Диск или корпоративного фотохранилища.
