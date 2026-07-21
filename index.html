@@ -25,6 +25,7 @@
         <button data-view="photos">Фото</button>
         <button data-view="applications" class="auth-only hidden">Мои заявки</button>
         <button data-view="profile" class="auth-only hidden">Профиль</button>
+        <button data-view="admin" class="admin-only hidden">Администратор</button>
       </nav>
       <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-expanded="false" aria-label="Открыть мобильное меню">
         <span></span><span></span><span></span>
@@ -46,6 +47,7 @@
       <button data-view="photos">Фото</button>
       <button data-view="applications" class="auth-only hidden">Мои заявки</button>
       <button data-view="profile" class="auth-only hidden">Профиль</button>
+      <button data-view="admin" class="admin-only hidden">Администратор</button>
       <button id="mobileLoginOpen" class="button secondary guest-only">Войти</button>
       <button id="mobileSignupOpen" class="button primary guest-only">Регистрация</button>
       <button id="mobileLogoutBtn" class="button secondary auth-only hidden">Выйти</button>
@@ -165,6 +167,35 @@
           </div>
           <a class="button primary" id="allPhotosLink" href="#" target="_blank" rel="noopener">Открыть Яндекс Диск ↗</a>
         </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-admin">
+      <div class="page-head wrap admin-page-head">
+        <div>
+          <span class="eyebrow blue">Панель управления</span>
+          <h1>Администратор</h1>
+          <p>Просмотр всех заявок, фильтрация участников, изменение статусов и выгрузка данных.</p>
+        </div>
+        <button class="button secondary" id="adminRefreshBtn" type="button">Обновить данные</button>
+      </div>
+      <div class="wrap admin-dashboard">
+        <div class="admin-metrics">
+          <article class="admin-metric"><span>Всего заявок</span><strong id="adminTotalCount">0</strong></article>
+          <article class="admin-metric"><span>Новые</span><strong id="adminNewCount">0</strong></article>
+          <article class="admin-metric"><span>Подтверждено</span><strong id="adminApprovedCount">0</strong></article>
+          <article class="admin-metric"><span>Участников</span><strong id="adminUserCount">0</strong></article>
+        </div>
+        <div class="admin-toolbar panel">
+          <label>Поиск<input id="adminSearch" type="search" placeholder="ФИО, телефон, подразделение"></label>
+          <label>Событие<select id="adminEventFilter"><option value="">Все события</option><option value="futsal-2027">Футзал</option><option value="volleyball-2027">Волейбол</option><option value="summer-games-2027">Летняя спартакиада</option></select></label>
+          <label>Регион<select id="adminRegionFilter"><option value="">Все регионы</option></select></label>
+          <label>Статус<select id="adminStatusFilter"><option value="">Все статусы</option><option value="new">Новая</option><option value="review">На рассмотрении</option><option value="approved">Подтверждена</option><option value="rejected">Отклонена</option><option value="cancelled">Отменена</option></select></label>
+          <button class="button primary" id="adminExportBtn" type="button">Скачать CSV</button>
+        </div>
+        <div id="adminMessage" class="message hidden"></div>
+        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Участник</th><th>Регион</th><th>Подразделение</th><th>Событие</th><th>Дисциплина</th><th>Команда</th><th>Дата</th><th>Статус</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
+        <div id="adminMobileCards" class="admin-mobile-cards"></div>
       </div>
     </section>
 
@@ -294,6 +325,9 @@
     </button>
     <button data-view="applications" class="bottom-nav-item auth-only hidden">
       <span>✓</span><small>Заявки</small>
+    </button>
+    <button data-view="admin" class="bottom-nav-item admin-only hidden">
+      <span>⚙</span><small>Админ</small>
     </button>
     <button data-view="profile" class="bottom-nav-item">
       <span>◉</span><small>Кабинет</small>
