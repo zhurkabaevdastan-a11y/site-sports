@@ -75,6 +75,11 @@ const INSTRUCTORS = [
   { region: "Мангистау", name: "ФИО уточняется", phone: "", email: "" }
 ];
 
+
+const STATUS_LABELS = { new: "Новая", review: "На рассмотрении", approved: "Подтверждена", rejected: "Отклонена", cancelled: "Отменена" };
+function getEventTitle(eventId){ return EVENTS.find(item=>item.id===eventId)?.title || eventId; }
+function escapeHtml(value){ return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
+
 const cfg = window.KTZ_CONFIG || {};
 const isConfigured = Boolean(cfg.supabaseUrl && cfg.supabaseAnonKey && !cfg.demoMode);
 const supabaseClient = isConfigured
@@ -83,6 +88,9 @@ const supabaseClient = isConfigured
 
 let currentUser = null;
 let currentProfile = {};
+let currentRole = "participant";
+let adminRows = [];
+let adminFilteredRows = [];
 let demoApplications = JSON.parse(localStorage.getItem("ktz_demo_applications") || "[]");
 let demoUser = JSON.parse(localStorage.getItem("ktz_demo_user") || "null");
 
@@ -103,25 +111,20 @@ function showMessage(el, text, error = false) {
 }
 
 function navigate(view) {
+  if (view === "admin" && currentRole !== "admin") { toast("Доступ разрешён только администратору"); view = currentUser ? "events" : "home"; }
   $$(".view").forEach(el => el.classList.remove("active"));
-  const target = $(`#view-${view}`);
-  if (target) target.classList.add("active");
-
-  $$(".bottom-nav-item").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.view === view);
-  });
-
-  $("#mobileDrawer")?.classList.add("hidden");
-  $("#mobileMenuToggle")?.setAttribute("aria-expanded", "false");
-
+  const target = $(`#view-${view}`); if (target) target.classList.add("active");
+  $$(".bottom-nav-item").forEach(btn => btn.classList.toggle("active", btn.dataset.view === view));
+  $("#mobileDrawer")?.classList.add("hidden"); $("#mobileMenuToggle")?.setAttribute("aria-expanded", "false");
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (view === "applications") loadApplications();
   if (view === "profile") loadProfile();
+  if (view === "admin") loadAdminDashboard();
 }
 
 $$("[data-view]").forEach(btn => btn.addEventListener("click", () => {
   const view = btn.dataset.view;
-  if ((view === "applications" || view === "profile") && !currentUser) {
+  if (["applications", "profile", "admin"].includes(view) && !currentUser) {
     openAuth("login");
     return;
   }
@@ -175,10 +178,12 @@ function renderInstructors() {
 }
 
 function updateAuthUI() {
-  const loggedIn = Boolean(currentUser);
+  const loggedIn = Boolean(currentUser); const isAdmin = loggedIn && currentRole === "admin";
   $$(".guest-only").forEach(el => el.classList.toggle("hidden", loggedIn));
   $$(".auth-only").forEach(el => el.classList.toggle("hidden", !loggedIn));
-  $("#userBadge").textContent = loggedIn ? currentUser.email : "";
+  $$(".admin-only").forEach(el => el.classList.toggle("hidden", !isAdmin));
+  $("#userBadge").textContent = loggedIn ? `${currentUser.email}${isAdmin ? " • admin" : ""}` : "";
+  $(".mobile-bottom-nav")?.classList.toggle("has-admin", isAdmin);
 }
 
 function openAuth(mode = "login") {
@@ -235,7 +240,7 @@ $("#loginForm").addEventListener("submit", async (e) => {
     return;
   }
   currentUser = data.user;
-  updateAuthUI();
+  await loadCurrentRole();
   closeAuth();
   navigate("events");
 });
@@ -274,7 +279,7 @@ $("#signupForm").addEventListener("submit", async (e) => {
     showMessage($("#authMessage"), "Аккаунт создан. Проверьте почту и подтвердите адрес.");
   } else {
     currentUser = data.user;
-    updateAuthUI();
+    await loadCurrentRole();
     closeAuth();
     navigate("profile");
   }
@@ -284,9 +289,20 @@ $("#logoutBtn").addEventListener("click", async () => {
   if (isConfigured) await supabaseClient.auth.signOut();
   localStorage.removeItem("ktz_demo_user");
   currentUser = null;
+  currentRole = "participant";
   updateAuthUI();
   navigate("home");
 });
+
+
+async function loadCurrentRole() {
+  currentRole = "participant";
+  if (!currentUser) { updateAuthUI(); return currentRole; }
+  if (!isConfigured) { currentRole = "admin"; updateAuthUI(); return currentRole; }
+  const { data, error } = await supabaseClient.from("profiles").select("role").eq("id", currentUser.id).maybeSingle();
+  if (error) console.error("Не удалось получить роль:", error); else if (data?.role) currentRole = data.role;
+  updateAuthUI(); return currentRole;
+}
 
 async function loadProfile() {
   if (!currentUser) return;
@@ -316,6 +332,8 @@ $("#profileForm").addEventListener("submit", async (e) => {
   const fd = new FormData(e.currentTarget);
   const profile = Object.fromEntries(fd.entries());
   profile.id = currentUser.id;
+  profile.email = currentUser.email || null;
+  if (currentProfile.role) profile.role = currentProfile.role;
 
   if (!isConfigured) {
     localStorage.setItem("ktz_demo_profile", JSON.stringify(profile));
@@ -453,6 +471,19 @@ function initPhotoFilters() {
 }
 
 
+
+function normalizeAdminRow(row){ const p=row.profiles||{}; return {id:row.id,user_id:row.user_id,event_id:row.event_id,event_title:row.events?.title||getEventTitle(row.event_id),discipline:row.discipline||"",team_name:row.team_name||"",status:row.status||"new",created_at:row.created_at,first_name:p.first_name||"",last_name:p.last_name||"",middle_name:p.middle_name||"",email:p.email||"",phone:p.phone||"",region:p.region||"",department:p.department||"",position:p.position||"",employee_number:p.employee_number||""}; }
+function adminFullName(row){ return [row.last_name,row.first_name,row.middle_name].filter(Boolean).join(" ") || "Профиль не заполнен"; }
+function updateAdminMetrics(){ $("#adminTotalCount").textContent=adminRows.length; $("#adminNewCount").textContent=adminRows.filter(r=>r.status==="new").length; $("#adminApprovedCount").textContent=adminRows.filter(r=>r.status==="approved").length; $("#adminUserCount").textContent=new Set(adminRows.map(r=>r.user_id)).size; }
+function applyAdminFilters(){ const q=($("#adminSearch")?.value||"").trim().toLowerCase(), eventId=$("#adminEventFilter")?.value||"", region=$("#adminRegionFilter")?.value||"", status=$("#adminStatusFilter")?.value||""; adminFilteredRows=adminRows.filter(r=>{ const h=[adminFullName(r),r.email,r.phone,r.department,r.position,r.employee_number,r.discipline,r.team_name].join(" ").toLowerCase(); return (!q||h.includes(q))&&(!eventId||r.event_id===eventId)&&(!region||r.region===region)&&(!status||r.status===status); }); renderAdminRows(); }
+function statusOptions(row){ return Object.entries(STATUS_LABELS).map(([v,l])=>`<option value="${v}" ${row.status===v?"selected":""}>${l}</option>`).join(""); }
+function renderAdminRows(){ const body=$("#adminTableBody"), cards=$("#adminMobileCards"); if(!adminFilteredRows.length){body.innerHTML='<tr><td colspan="8" class="admin-empty-cell">Заявки не найдены</td></tr>';cards.innerHTML='<div class="empty">Заявки не найдены</div>';return;} body.innerHTML=adminFilteredRows.map(r=>`<tr><td><strong>${escapeHtml(adminFullName(r))}</strong><small>${escapeHtml(r.phone||r.email||"Контакты не указаны")}</small></td><td>${escapeHtml(r.region||"—")}</td><td>${escapeHtml(r.department||"—")}</td><td>${escapeHtml(r.event_title)}</td><td>${escapeHtml(r.discipline)}</td><td>${escapeHtml(r.team_name||"—")}</td><td>${r.created_at?new Date(r.created_at).toLocaleDateString("ru-RU"):"—"}</td><td><select class="admin-status-select" data-registration-id="${escapeHtml(r.id)}">${statusOptions(r)}</select></td></tr>`).join(""); cards.innerHTML=adminFilteredRows.map(r=>`<article class="admin-registration-card"><div class="admin-card-head"><div><strong>${escapeHtml(adminFullName(r))}</strong><small>${escapeHtml(r.region||"Регион не указан")}</small></div><span>${r.created_at?new Date(r.created_at).toLocaleDateString("ru-RU"):""}</span></div><dl><div><dt>Событие</dt><dd>${escapeHtml(r.event_title)}</dd></div><div><dt>Дисциплина</dt><dd>${escapeHtml(r.discipline)}</dd></div><div><dt>Подразделение</dt><dd>${escapeHtml(r.department||"—")}</dd></div><div><dt>Телефон</dt><dd>${escapeHtml(r.phone||"—")}</dd></div><div><dt>Команда</dt><dd>${escapeHtml(r.team_name||"—")}</dd></div></dl><label>Статус<select class="admin-status-select" data-registration-id="${escapeHtml(r.id)}">${statusOptions(r)}</select></label></article>`).join(""); $$(".admin-status-select").forEach(s=>s.addEventListener("change",()=>updateRegistrationStatus(s.dataset.registrationId,s.value))); }
+async function loadAdminDashboard(){ if(!currentUser||currentRole!=="admin"){navigate("events");return;} const msg=$("#adminMessage");msg.classList.add("hidden"); if(!isConfigured){adminRows=demoApplications.map(r=>normalizeAdminRow({...r,profiles:JSON.parse(localStorage.getItem("ktz_demo_profile")||"{}"),events:{title:getEventTitle(r.event_id)}}));} else { const {data,error}=await supabaseClient.from("registrations").select(`id,user_id,event_id,discipline,team_name,comment,status,created_at,profiles(first_name,last_name,middle_name,email,phone,region,department,position,employee_number),events(title)`).order("created_at",{ascending:false}); if(error){showMessage(msg,`Не удалось загрузить заявки: ${error.message}`,true);adminRows=[];}else adminRows=(data||[]).map(normalizeAdminRow); } const rs=$("#adminRegionFilter"), cur=rs.value, regs=[...new Set(adminRows.map(r=>r.region).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ru"));rs.innerHTML='<option value="">Все регионы</option>'+regs.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");rs.value=regs.includes(cur)?cur:"";updateAdminMetrics();applyAdminFilters(); }
+async function updateRegistrationStatus(id,status){ if(currentRole!=="admin")return; if(!isConfigured){const t=demoApplications.find(x=>x.id===id);if(t)t.status=status;localStorage.setItem("ktz_demo_applications",JSON.stringify(demoApplications));}else{const {error}=await supabaseClient.from("registrations").update({status}).eq("id",id);if(error){toast(`Ошибка изменения статуса: ${error.message}`);await loadAdminDashboard();return;}} const r=adminRows.find(x=>x.id===id);if(r)r.status=status;updateAdminMetrics();applyAdminFilters();toast(`Статус изменён: ${STATUS_LABELS[status]}`); }
+function csvValue(v){return `"${String(v??"").replaceAll('"','""')}"`;}
+function exportAdminCsv(){ if(!adminFilteredRows.length){toast("Нет данных для выгрузки");return;} const headers=["ФИО","Email","Телефон","Регион","Подразделение","Должность","Табельный номер","Событие","Дисциплина","Команда","Статус","Дата заявки"]; const lines=[headers.map(csvValue).join(";"),...adminFilteredRows.map(r=>[adminFullName(r),r.email,r.phone,r.region,r.department,r.position,r.employee_number,r.event_title,r.discipline,r.team_name,STATUS_LABELS[r.status]||r.status,r.created_at?new Date(r.created_at).toLocaleString("ru-RU"):""].map(csvValue).join(";"))]; const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=`ktzh-registrations-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url); }
+function initializeAdminUI(){["adminSearch","adminEventFilter","adminRegionFilter","adminStatusFilter"].forEach(id=>{const el=$(`#${id}`);el?.addEventListener(id==="adminSearch"?"input":"change",applyAdminFilters);});$("#adminRefreshBtn")?.addEventListener("click",loadAdminDashboard);$("#adminExportBtn")?.addEventListener("click",exportAdminCsv);}
+
 function initializeMobileUI() {
   const toggle = $("#mobileMenuToggle");
   const drawer = $("#mobileDrawer");
@@ -478,7 +509,7 @@ function initializeMobileUI() {
   drawer?.querySelectorAll("[data-view]").forEach(btn => {
     btn.addEventListener("click", () => {
       const view = btn.dataset.view;
-      if ((view === "applications" || view === "profile") && !currentUser) {
+      if (["applications", "profile", "admin"].includes(view) && !currentUser) {
         openAuth("login");
         return;
       }
@@ -493,6 +524,7 @@ async function initialize() {
   renderPhotoArchive();
   initPhotoFilters();
   initializeMobileUI();
+  initializeAdminUI();
   $("#modeNote").textContent = isConfigured
     ? "Рабочий режим: данные сохраняются в Supabase."
     : "Демо-режим: данные сохраняются только в этом браузере. Подключите Supabase для настоящей базы.";
@@ -500,14 +532,16 @@ async function initialize() {
   if (isConfigured) {
     const { data } = await supabaseClient.auth.getSession();
     currentUser = data.session?.user || null;
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
+    await loadCurrentRole();
+    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
       currentUser = session?.user || null;
-      updateAuthUI();
+      await loadCurrentRole();
     });
   } else {
     currentUser = demoUser;
+    currentRole = currentUser ? "admin" : "participant";
+    updateAuthUI();
   }
-  updateAuthUI();
 }
 
 initialize();
